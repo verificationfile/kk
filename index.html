@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My HTML Files Dashboard</title>
+    <title>Protected HTML Files Dashboard</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,23 +11,39 @@
             margin: 0;
             padding: 20px;
         }
-        .container {
+        .container, .auth-box {
             max-width: 700px;
-            margin: auto;
+            margin: 40px auto;
             background: #fff;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-        h2 {
             text-align: center;
-            color: #333;
-            margin-bottom: 20px;
         }
-        ul {
-            list-style-type: none;
-            padding: 0;
+        .auth-box input {
+            padding: 10px;
+            font-size: 16px;
+            width: 60%;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
+        .auth-box button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .auth-box button:hover { background-color: #0056b3; }
+        .error { color: red; margin-top: 10px; display: none; }
+        
+        /* Dashboard styles (hidden until unlocked) */
+        #dashboard { display: none; text-align: left; }
+        h2 { color: #333; margin-bottom: 20px; text-align: center; }
+        ul { list-style-type: none; padding: 0; }
         li {
             display: flex;
             justify-content: space-between;
@@ -38,10 +54,7 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
-        span {
-            font-weight: 500;
-            color: #333;
-        }
+        span { font-weight: 500; color: #333; }
         .actions a {
             text-decoration: none;
             padding: 6px 12px;
@@ -49,21 +62,25 @@
             border-radius: 4px;
             font-size: 14px;
         }
-        .btn-open {
-            background-color: #007bff;
-            color: white;
-        }
-        .btn-download {
-            background-color: #28a745;
-            color: white;
-        }
+        .btn-open { background-color: #007bff; color: white; }
+        .btn-download { background-color: #28a745; color: white; }
         .btn-open:hover { background-color: #0056b3; }
         .btn-download:hover { background-color: #218838; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<!-- Password Screen -->
+<div id="authScreen" class="auth-box">
+    <h2>Enter Access Code</h2>
+    <p>Please enter the secret code to view the tools dashboard.</p>
+    <input type="password" id="passCode" placeholder="Enter code here...">
+    <button onclick="checkPassword()">Submit</button>
+    <div id="errorMsg" class="error">Incorrect code. Try again!</div>
+</div>
+
+<!-- Main Dashboard (Hidden by default) -->
+<div id="dashboard" class="container">
     <h2>All HTML Files Dashboard</h2>
     <ul>
         <li>
@@ -145,6 +162,21 @@
         </li>
     </ul>
 </div>
+
+<script>
+    function checkPassword() {
+        // Change "1234" to whatever secret code you want to use
+        const correctCode = "kkwebsite";
+        const userInput = document.getElementById("passCode").value;
+        
+        if (userInput === correctCode) {
+            document.getElementById("authScreen").style.display = "none";
+            document.getElementById("dashboard").style.display = "block";
+        } else {
+            document.getElementById("errorMsg").style.display = "block";
+        }
+    }
+</script>
 
 </body>
 </html>
