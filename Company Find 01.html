@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Professional Company Lookup</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f6f9;
+    margin:0;
+    padding:20px;
+}
+.container{
+    max-width:800px;
+    margin:auto;
+    background:#fff;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 0 15px rgba(0,0,0,.1);
+}
+h2{
+    text-align:center;
+    color:#333;
+}
+input{
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    border:1px solid #ccc;
+    border-radius:6px;
+    box-sizing:border-box;
+}
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    background:#0066cc;
+    color:#fff;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:16px;
+}
+button:hover{
+    background:#004c99;
+}
+.result{
+    margin-top:20px;
+    border:1px solid #ddd;
+    padding:15px;
+    border-radius:6px;
+    background:#fafafa;
+}
+.link-btn{
+    display:block;
+    margin:8px 0;
+    padding:10px;
+    text-decoration:none;
+    text-align:center;
+    background:#28a745;
+    color:white;
+    border-radius:6px;
+}
+.link-btn:hover{
+    background:#218838;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h2>Professional Company Lookup</h2>
+
+<input type="text" id="company" placeholder="Company Name">
+<input type="text" id="country" placeholder="Country (Optional)">
+
+<button onclick="searchCompany()">Search</button>
+
+<div class="result">
+
+<a id="googleLink" class="link-btn" target="_blank">Open Google Search</a>
+
+<a id="mapsLink" class="link-btn" target="_blank">Open Google Maps</a>
+
+<a id="contactLink" class="link-btn" target="_blank">Search Contact Details</a>
+
+</div>
+
+</div>
+
+<script>
+function searchCompany(){
+
+let company = document.getElementById("company").value.trim();
+let country = document.getElementById("country").value.trim();
+
+if(!company){
+    alert("Enter company name");
+    return;
+}
+
+let query = company;
+if(country){
+    query += " " + country;
+}
+
+let google =
+"https://www.google.com/search?q=" +
+encodeURIComponent(query);
+
+let maps =
+"https://www.google.com/maps/search/" +
+encodeURIComponent(query);
+
+let contact =
+"https://www.google.com/search?q=" +
+encodeURIComponent(query + " address P.O. Box phone email website");
+
+document.getElementById("googleLink").href = google;
+document.getElementById("mapsLink").href = maps;
+document.getElementById("contactLink").href = contact;
+
+window.open(contact, "_blank");
+}
+</script>
+
+</body>
+</html>

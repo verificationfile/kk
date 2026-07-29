@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number to Roman Numeral Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        input {
+            width: 80%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            outline: none;
+        }
+        input:focus {
+            border-color: #007bff;
+        }
+        .result-box {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            word-wrap: break-word;
+            min-height: 35px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Number to Roman Numeral</h2>
+    <input type="number" id="numberInput" placeholder="Enter a number (1 - 3999)" min="1" max="3999" oninput="convertToRoman()">
+    <div class="result-box" id="romanResult"></div>
+</div>
+
+<script>
+function convertToRoman() {
+    const numInput = document.getElementById("numberInput").value;
+    const resultDiv = document.getElementById("romanResult");
+    
+    let num = parseInt(numInput);
+
+    if (isNaN(num) || numInput === "") {
+        resultDiv.innerText = "";
+        return;
+    }
+
+    if (num < 1 || num > 3999) {
+        resultDiv.innerText = "Enter a number between 1 and 3999";
+        resultDiv.style.color = "red";
+        return;
+    }
+
+    resultDiv.style.color = "#007bff";
+
+    const romanMatrix = [
+        [1000, 'M'],
+        [900, 'CM'],
+        [500, 'D'],
+        [400, 'CD'],
+        [100, 'C'],
+        [90, 'XC'],
+        [50, 'L'],
+        [40, 'XL'],
+        [10, 'X'],
+        [9, 'IX'],
+        [5, 'V'],
+        [4, 'IV'],
+        [1, 'I']
+    ];
+
+    let roman = '';
+
+    for (let i = 0; i < romanMatrix.length; i++) {
+        while (num >= romanMatrix[i][0]) {
+            roman += romanMatrix[i][1];
+            num -= romanMatrix[i][0];
+        }
+    }
+
+    resultDiv.innerText = roman;
+}
+</script>
+
+</body>
+</html>

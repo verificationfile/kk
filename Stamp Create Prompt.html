@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Corporate Stamp Prompt Generator</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #111827;
+            --text-color: #f3f4f6;
+            --accent-color: #2563eb;
+            --accent-hover: #1d4ed8;
+            --border-color: #1f2937;
+            --success-color: #059669;
+            --input-bg: #030712;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 30px;
+            width: 100%;
+            max-width: 700px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+
+        h2 {
+            margin-top: 0;
+            text-align: center;
+            color: #60a5fa;
+            font-size: 22px;
+            margin-bottom: 25px;
+            letter-spacing: 0.5px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 11px 14px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            font-size: 15px;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        .output-section {
+            margin-top: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 14px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: #38bdf8;
+            font-family: monospace;
+            font-size: 13px;
+            resize: vertical;
+            box-sizing: border-box;
+            line-height: 1.5;
+        }
+
+        .btn-container {
+            margin-top: 15px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 15px;
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 22px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-download {
+            background-color: #059669;
+        }
+        .btn-download:hover {
+            background-color: #047857;
+        }
+
+        .copied-msg {
+            color: var(--success-color);
+            font-size: 14px;
+            display: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Official Corporate Stamp Prompt Generator</h2>
+        
+        <div class="grid-2">
+            <div class="input-group">
+                <label for="englishName">Company Name (English):</label>
+                <input type="text" id="englishName" placeholder="e.g. Sana Studio" oninput="generatePrompt()">
+            </div>
+
+            <div class="input-group">
+                <label for="arabicName">Company Name (Arabic - Optional):</label>
+                <input type="text" id="arabicName" placeholder="e.g. شركة استوديو سناء" oninput="generatePrompt()">
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="input-group">
+                <label for="poBox">P.O. Box (Inside Circle):</label>
+                <input type="text" id="poBox" placeholder="e.g. 5526" oninput="generatePrompt()">
+            </div>
+
+            <div class="input-group">
+                <label for="city">City & Country (Inside Circle):</label>
+                <input type="text" id="city" placeholder="e.g. Dubai UAE" oninput="generatePrompt()">
+            </div>
+        </div>
+
+        <div class="output-section">
+            <label for="outputPrompt">Generated Professional Stamp Prompt:</label>
+            <textarea id="outputPrompt" readonly></textarea>
+            
+            <div class="btn-container">
+                <span id="copiedMsg" class="copied-msg">Copied Successfully!</span>
+                <button onclick="copyPrompt()">Copy Prompt</button>
+                <button class="btn-download" onclick="downloadHTML()">Download This Tool</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function generatePrompt() {
+            const englishName = document.getElementById('englishName').value.trim();
+            const arabicName = document.getElementById('arabicName').value.trim();
+            const poBox = document.getElementById('poBox').value.trim();
+            const city = document.getElementById('city').value.trim();
+
+            let outerText = [];
+            if (englishName) outerText.push(englishName);
+            if (arabicName) outerText.push(arabicName);
+
+            let innerText = [];
+            if (poBox) innerText.push(poBox);
+            if (city) innerText.push(city);
+
+            let structureDesc = "";
+            if (outerText.length > 0 && innerText.length > 0) {
+                structureDesc = `featuring a concentric circular border layout with the company name "${outerText.join(' - ')}" clearly curved along the outer ring typography, and the inner core section containing "${innerText.join(' - ')}" cleanly placed inside the center circle`;
+            } else if (outerText.length > 0) {
+                structureDesc = `featuring a circular border layout with the company name "${outerText.join(' - ')}" curved along the ring typography`;
+            } else if (innerText.length > 0) {
+                structureDesc = `featuring a circular stamp layout with details "${innerText.join(' - ')}" placed inside the core center`;
+            } else {
+                structureDesc = `featuring classic corporate placeholder text in crisp official typography`;
+            }
+
+            const prompt = `A top-quality, professional official corporate circular rubber stamp and company seal design, viewed straight-on from directly above (top-down flat lay perspective, zero angle, no perspective distortion). Authentic royal blue ink color (#1e40af), traditional textured ink impression effect with natural stamp pad imperfections and slight realistic ink bleeding on textured white paper background. The stamp is ${structureDesc}. High resolution, ultra-clear vector clarity, hyper-realistic ink texture, professional corporate authentication stamp, isolated crisp clean presentation, 8k resolution, masterclass graphic design --ar 1:1 --v 6.0`;
+
+            document.getElementById('outputPrompt').value = prompt;
+        }
+
+        function copyPrompt() {
+            const textarea = document.getElementById('outputPrompt');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            
+            navigator.clipboard.writeText(textarea.value).then(() => {
+                const msg = document.getElementById('copiedMsg');
+                msg.style.display = 'inline';
+                setTimeout(() => {
+                    msg.style.display = 'none';
+                }, 2000);
+            });
+        }
+
+        function downloadHTML() {
+            const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'stamp_prompt_generator.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        generatePrompt();
+    </script>
+
+</body>
+</html>

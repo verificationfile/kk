@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Advanced Master Salary Certificate Generator</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        @page {
+            size: A4;
+            margin: 0mm;
+        }
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            color: #000000;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+        }
+
+        /* Top Control Panel (Hidden during print) */
+        .control-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 10px 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            font-family: Arial, sans-serif;
+            font-size: 9pt;
+            gap: 10px;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .control-panel select, .control-panel button, .control-panel input {
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #555;
+            background: #333;
+            color: #fff;
+            font-size: 9pt;
+            cursor: pointer;
+        }
+        .control-panel button {
+            background: #007bff;
+            border-color: #007bff;
+            font-weight: bold;
+        }
+        .control-panel button:hover {
+            background: #0056b3;
+        }
+        .control-panel button.save-btn {
+            background: #28a745;
+            border-color: #28a745;
+        }
+        .control-panel button.save-btn:hover {
+            background: #218838;
+        }
+
+        /* A4 Page Container */
+        .page-sheet {
+            width: 210mm;
+            height: 297mm;
+            margin: 90px auto 40px auto;
+            background: #ffffff;
+            padding: 25mm 22mm 20mm 22mm;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .cert-template {
+            display: none;
+            width: 100%;
+        }
+        .cert-template.active {
+            display: block;
+        }
+
+        [contenteditable="true"] {
+            outline: 1px dashed transparent;
+            transition: outline 0.2s;
+            cursor: text;
+        }
+        [contenteditable="true"]:hover {
+            outline: 1px dashed #999;
+            background-color: rgba(0,0,0,0.02);
+        }
+        [contenteditable="true"]:focus {
+            outline: 1px solid #000;
+            background-color: rgba(0,0,0,0.04);
+        }
+
+        .title-container {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+        .title-container h2 {
+            font-size: 15pt;
+            text-decoration: underline;
+            letter-spacing: 0.5px;
+            margin: 0;
+            display: inline-block;
+            font-weight: bold;
+        }
+        .body-paragraph {
+            margin-bottom: 24px;
+            text-align: justify;
+        }
+
+        .info-table {
+            width: 100%;
+            margin: 22px 0 28px 0;
+            border-collapse: collapse;
+        }
+        .info-table td {
+            padding: 7px 0;
+            vertical-align: top;
+        }
+        .info-table td.label-col {
+            width: 35%;
+        }
+        .info-table td.val-col {
+            width: 65%;
+            font-weight: bold;
+        }
+
+        .salary-table {
+            width: 60%;
+            margin: 22px auto 28px auto;
+            border-collapse: collapse;
+        }
+        .salary-table td {
+            padding: 6px 10px;
+        }
+        .divider-row td {
+            border-bottom: 1px solid #000;
+            padding-bottom: 2px;
+        }
+
+        @media print {
+            @page {
+                margin: 0;
+            }
+            .control-panel {
+                display: none !important;
+            }
+            body {
+                background: none !important;
+                padding: 0 !important;
+            }
+            .page-sheet {
+                margin: 0 !important;
+                box-shadow: none !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                padding: 25mm 22mm 20mm 22mm !important;
+                page-break-after: avoid;
+                page-break-before: avoid;
+            }
+            [contenteditable="true"] {
+                outline: none !important;
+                background-color: transparent !important;
+            }
+        }
+    </style>
+    <script>
+        function switchTemplate() {
+            var selectedVal = document.getElementById('templateSelect').value;
+            var templates = document.getElementsByClassName('cert-template');
+            for (var i = 0; i < templates.length; i++) {
+                templates[i].classList.remove('active');
+            }
+            document.getElementById(selectedVal).classList.add('active');
+        }
+
+        function changeGlobalFont() {
+            var selectedFont = document.getElementById('globalFontSelect').value;
+            var activeSheet = document.querySelector('.cert-template.active');
+            if (activeSheet) {
+                activeSheet.style.fontFamily = selectedFont;
+            }
+        }
+
+        function changeSelectedFont() {
+            var selectedFont = document.getElementById('selectedFontSelect').value;
+            var selection = window.getSelection();
+            if (!selection.isCollapsed && selection.rangeCount > 0) {
+                var range = selection.getRangeAt(0);
+                var span = document.createElement('span');
+                span.style.fontFamily = selectedFont;
+                span.appendChild(range.extractContents());
+                range.insertNode(span);
+            } else {
+                alert("Please select some specific text in the certificate first to change its font separately.");
+            }
+        }
+
+        function toggleIdType() {
+            var idType = document.getElementById('idTypeSelect').value;
+            var labels = document.getElementsByClassName('sync-id-label');
+            var values = document.getElementsByClassName('sync-id-value');
+
+            for (var i = 0; i < labels.length; i++) {
+                labels[i].innerText = idType === 'emirates' ? 'Emirates ID No.' : 'Passport No.';
+            }
+            for (var j = 0; j < values.length; j++) {
+                values[j].innerText = idType === 'emirates' ? '784-1989-4263906-7' : 'CB5151993';
+            }
+        }
+
+        function numberToWords(num) {
+            if (num === 0) return "Zero";
+            var a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+            var b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+            function lit(n) {
+                if (n < 20) return a[n];
+                var digit = n % 10;
+                return b[Math.floor(n / 10)] + (digit ? ' ' + a[digit] : '');
+            }
+
+            function trans(n) {
+                if (n < 100) return lit(n);
+                if (n < 1000) return a[Math.floor(n / 100)] + ' Hundred' + (n % 100 === 0 ? '' : ' ' + trans(n % 100));
+                if (n < 1000000) return trans(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 === 0 ? '' : ' ' + trans(n % 1000));
+                return trans(Math.floor(n / 1000000)) + ' Million' + (n % 1000000 === 0 ? '' : ' ' + trans(n % 1000000));
+            }
+            return trans(num);
+        }
+
+        function updateSalaryWords(elem, wordsElemId) {
+            var text = elem.innerText.replace(/[^0-9]/g, '');
+            var num = parseInt(text, 10);
+            if (!isNaN(num)) {
+                var formattedNum = num.toLocaleString() + '/-';
+                elem.innerText = formattedNum;
+                var words = numberToWords(num) + " UAE Dirhams Only";
+                var wordElem = document.getElementById(wordsElemId);
+                if (wordElem) {
+                    wordElem.innerText = words;
+                }
+            }
+        }
+
+        function calculateBreakdownTotal() {
+            var basicElem = document.getElementById('t5-basic');
+            var allowanceElem = document.getElementById('t5-allowance');
+            var totalElem = document.getElementById('t5-total');
+
+            var basicVal = parseInt(basicElem.innerText.replace(/[^0-9]/g, ''), 10) || 0;
+            var allowanceVal = parseInt(allowanceElem.innerText.replace(/[^0-9]/g, ''), 10) || 0;
+            var totalVal = basicVal + allowanceVal;
+
+            basicElem.innerText = 'AED ' + basicVal.toLocaleString() + '/-';
+            allowanceElem.innerText = 'AED ' + allowanceVal.toLocaleString() + '/-';
+            totalElem.innerText = 'AED ' + totalVal.toLocaleString() + '/-';
+        }
+
+        function syncCompany(elem) {
+            var val = elem.innerText;
+            var comps = document.getElementsByClassName('sync-company-name');
+            for (var i = 0; i < comps.length; i++) {
+                if (comps[i] !== elem) {
+                    comps[i].innerText = val;
+                }
+            }
+        }
+
+        function syncEmployee(elem) {
+            var val = elem.innerText;
+            var emps = document.getElementsByClassName('sync-employee-name');
+            for (var i = 0; i < emps.length; i++) {
+                if (emps[i] !== elem) {
+                    emps[i].innerText = val;
+                }
+            }
+        }
+
+        function saveProgress() {
+            var empNames = document.getElementsByClassName('sync-employee-name');
+            var empName = "Salary_Certificate";
+            if (empNames.length > 0 && empNames[0].innerText.trim() !== "") {
+                empName = empNames[0].innerText.trim().replace(/[^a-zA-Z0-9]/g, '_');
+            }
+
+            var editableElements = document.querySelectorAll('[contenteditable="true"]');
+            editableElements.forEach(function(el) {
+                el.setAttribute('data-saved-text', el.innerHTML);
+            });
+
+            var selects = document.querySelectorAll('select');
+            selects.forEach(function(sel) {
+                var opts = sel.options;
+                for (var k = 0; k < opts.length; k++) {
+                    if (opts[k].selected) {
+                        opts[k].setAttribute('selected', 'selected');
+                    } else {
+                        opts[k].removeAttribute('selected');
+                    }
+                }
+            });
+
+            var htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+
+            var blob = new Blob([htmlContent], {type: 'text/html;charset=utf-8'});
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = empName + '_Certificate.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            var editableElements = document.querySelectorAll('[contenteditable="true"]');
+            editableElements.forEach(function(el) {
+                if (el.hasAttribute('data-saved-text')) {
+                    el.innerHTML = el.getAttribute('data-saved-text');
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+
+<!-- Control Panel -->
+<div class="control-panel">
+    <div class="control-group">
+        <label><strong>Format:</strong></label>
+        <select id="templateSelect" onchange="switchTemplate()">
+            <option value="template1">Format 1: Standard Driver</option>
+            <option value="template2">Format 2: Consulate (HR Officer)</option>
+            <option value="template3">Format 3: Consulate (Managing Director)</option>
+            <option value="template4">Format 4: Passport & Salesman</option>
+            <option value="template5">Format 5: Breakdown Table</option>
+            <option value="template6">Format 6: Bus Driver</option>
+            <option value="template7">Format 7: Ref & Engineer</option>
+            <option value="template8">Format 8: General Style 1</option>
+            <option value="template9">Format 9: General Style 2</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label><strong>ID Type:</strong></label>
+        <select id="idTypeSelect" onchange="toggleIdType()">
+            <option value="emirates">Emirates ID</option>
+            <option value="passport">Passport Number</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label><strong>All Font:</strong></label>
+        <select id="globalFontSelect" onchange="changeGlobalFont()">
+            <option value="'Times New Roman', Times, serif">Times New Roman</option>
+            <option value="Arial, Helvetica, sans-serif">Arial</option>
+            <option value="'Courier New', Courier, monospace">Courier New</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+            <option value="Calibri, sans-serif">Calibri</option>
+            <option value="Verdana, sans-serif">Verdana</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label><strong>Selected Text Font:</strong></label>
+        <select id="selectedFontSelect" onchange="changeSelectedFont()">
+            <option value="'Times New Roman', Times, serif">Times New Roman</option>
+            <option value="Arial, Helvetica, sans-serif">Arial</option>
+            <option value="'Courier New', Courier, monospace">Courier New</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+            <option value="Calibri, sans-serif">Calibri</option>
+            <option value="Verdana, sans-serif">Verdana</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <button class="save-btn" onclick="saveProgress()">💾 Save Progress</button>
+        <button onclick="window.print()">Print / PDF</button>
+    </div>
+</div>
+
+<div class="page-sheet">
+
+    <!-- ================= TEMPLATE 1 ================= -->
+    <div id="template1" class="cert-template active">
+        <div style="margin-bottom: 25px;">
+            Date: <span contenteditable="true">23-07-2026</span>
+        </div>
+        <div class="title-container">
+            <h2>SALARY CERTIFICATE</h2>
+        </div>
+        <div class="body-paragraph">
+            This is to certify that Mr. <span class="sync-employee-name" contenteditable="true" style="font-weight: bold;" oninput="syncEmployee(this)">FAROOQ SHEHZAD</span>, <span class="sync-id-label">Emirates ID No.</span> <span class="sync-id-value" contenteditable="true" style="font-weight: bold;">784-1989-4263906-7</span>, has been working with our organization as a <span contenteditable="true" style="font-weight: bold;">Light Vehicle Driver</span>. His current monthly salary is AED <span contenteditable="true" style="font-weight: bold;" onblur="updateSalaryWords(this, 't1-salary-words')">5,000/-</span> (<span id="t1-salary-words" contenteditable="true" style="font-weight: bold;">Five Thousand UAE Dirhams Only</span>).
+        </div>
+        <div class="body-paragraph">
+            This salary certificate is issued upon his personal request for submission to the <span contenteditable="true">Pakistan Consulate</span> only.
+        </div>
+        <div class="body-paragraph" style="margin-top: 30px;">
+            Best regards
+        </div>
+        <div style="margin-top: 40px;">
+            <div style="font-weight: bold; margin-bottom: 30px;" class="sync-company-name" contenteditable="true" oninput="syncCompany(this)">MOHAMAD OMAR AUTO SPARE PARTS TR.</div>
+            <div>
+                <div style="font-weight: bold;" contenteditable="true">HAMID KHAN</div>
+                <div style="font-weight: bold;">(<span contenteditable="true">OPERATION MANAGER</span>)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= TEMPLATE 2 ================= -->
+    <div id="template2" class="cert-template">
+        <div style="margin-bottom: 15px;" contenteditable="true">July 28, 2026</div>
+        <div style="margin-bottom: 20px; font-weight: bold;" contenteditable="true">Pakistan Consulate Dubai, UAE</div>
+        
+        <div style="margin-bottom: 15px;">Dear Sir,</div>
+        <div style="margin-bottom: 20px;">Subject: <span contenteditable="true" style="font-weight: bold; text-decoration: underline;">Salary Certificate</span></div>
+
+        <div class="body-paragraph">
+            This is to certify that the below mentioned is employed by <span class="sync-company-name" contenteditable="true" style="font-weight: bold;" oninput="syncCompany(this)">AHMED ALI RASHED ALAZAB ALNAQBI</span> in the position of <span contenteditable="true" style="font-weight: bold;">Cook</span>.
+        </div>
+
+        <table class="info-table">
+            <tr>
+                <td class="label-col">Name</td>
+                <td class="val-col sync-employee-name" contenteditable="true" oninput="syncEmployee(this)">Mr. Liaqat Ali Gul Faraz Khan</td>
+            </tr>
+            <tr>
+                <td class="label-col">Employee ID</td>
+                <td class="val-col" contenteditable="true">0139</td>
+            </tr>
+            <tr>
+                <td class="label-col">Nationality</td>
+                <td class="val-col" contenteditable="true">Pakistan</td>
+            </tr>
+            <tr>
+                <td class="label-col sync-id-label">Emirates ID</td>
+                <td class="val-col sync-id-value" contenteditable="true">784-1985-4152598-0</td>
+            </tr>
+            <tr>
+                <td class="label-col">Gross Salary</td>
+                <td class="val-col" contenteditable="true">AED 1,100/- per month</td>
+            </tr>
+        </table>
+
+        <div class="body-paragraph">
+            This certificate has been issued upon the employee's request without any liability on <span class="sync-company-name" contenteditable="true" style="font-weight: bold;" oninput="syncCompany(this)">AHMED ALI RASHED ALAZAB ALNAQBI.</span>
+        </div>
+        <div class="body-paragraph">
+            The certificate is valid for one month from the date of issue.
+        </div>
+
+        <div style="margin-top: 25px;">Regards,</div>
+        
+        <div style="margin-top: 35px;">
+            <div style="font-weight: bold;" contenteditable="true">Atif Raja</div>
+            <div style="font-weight: bold;" contenteditable="true">MANAGING DIRECTOR</div>
+        </div>
+    </div>
+
+    <!-- ================= TEMPLATE 3 ================= -->
+    <div id="template3" class="cert-template">
+        <div style="margin-bottom: 15px;" contenteditable="true">July 24, 2026</div>
+        <div style="margin-bottom: 20px; font-weight: bold;" contenteditable="true">Pakistan Consulate Dubai, UAE</div>
+        
+        <div style="margin-bottom: 15px;">Dear Sir,</div>
+        <div style="margin-bottom: 20px;">Subject: <span contenteditable="true" style="font-weight: bold; text-decoration: underline;">Salary Certificate</span></div>
+
+        <div class="body-paragraph">
+            This is to certify that the below mentioned is employed by <span class="sync-company-name" contenteditable="true" style="font-weight: bold;" oninput="syncCompany(this)">Sibca Electronic Equipment Est</span> in the position of <span contenteditable="true" style="font-weight: bold;">Technician</span>.
+        </div>
+
+        <table class="info-table">
+            <tr>
+                <td class="label-col">Name</td>
+                <td class="val-col sync-employee-name" contenteditable="true" oninput="syncEmployee(this)">Mr. Hazrat Bilal</td>
+            </tr>
+            <tr>
+                <td class="label-col">Employee ID</td>
+                <td class="val-col" contenteditable="true">4660</td>
+            </tr>
+            <tr>
+                <td class="label-col">Nationality</td>
+                <td class="val-col" contenteditable="true">Pakistan</td>
+            </tr>
+            <tr>
+                <td class="label-col sync-id-label">Emirates ID</td>
+                <td class="val-col sync-id-value" contenteditable="true">784-1990-3746028-6</td>
+            </tr>
+            <tr>
+                <td class="label-col">Date of Employment</td>
+                <td class="val-col" contenteditable="true">December 05, 2023</td>
+            </tr>
+            <tr>
+                <td class="label-col">Gross Salary</td>
+                <td class="val-col" contenteditable="true">AED 2,500.00/- per month</td>
+            </tr>
+        </table>
+
+        <div class="body-paragraph">
+            This certificate has been issued upon the employee's request without any liability on <span class="sync-company-name" contenteditable="true" style="font-weight: bold;" oninput="syncCompany(this)">Sibca Electronic Equipment Est.</span>
+        </div>
+        <div class="body-paragraph">
+            The certificate is valid for one month from the date of issue.
+        </div>
+
+        <div style="margin-top: 25px;">Regards,</div>
+        
+        <div style="margin-top: 35px;">
+            <div style="font-weight: bold;" contenteditable="true">Lobna Mohammed Al Jondi</div>
+            <div style="font-weight: bold;" contenteditable="true">Chief Human Resources Officer</div>
+        </div>
+    </div>
+
+    <!-- ================= TEMPLATE 4 ================= -->
+    <div id="template4" class="cert-template">
+        <div style="margin-bottom: 25px;">
+            Date: <span contenteditable="true">23/07/2026</span>
+        </div>
+        <div class="title-container">
+            <h2>SALARY CERTIFICATE</h2>
+        </div>
+        <div class="body-paragraph">
+            This is to certify that <span class="sync-employee-name" contenteditable="true" style="font-weight: bold;" oninput="syncEmployee(this)">Mr. ZAR NABI SHAH</span>, <span class="sync-id-label">Passport No.</span> <span class="sync-id-value" contenteditable="true" style="font-weight: bold;">CB5151993</span>, has been working with our organization as a <span contenteditable="true" style="font-weight: bold;">Salesman</span>. His current monthly salary is AED <span contenteditable="true" style="font-weight: bold;" onblur="updateSalaryWords(this, 't4-salary-words')">3,500/-</span> (<span id="t4-salary-words" contenteditable="true" style="font-weight: bold;">Three Thousand Five Hundred UAE Dirhams Only</span>).
+        </div>
+        <div class="body-paragraph">
+            This salary certificate is issued upon his personal request for submission to the Pakistan Consulate only.
+        </div>
+        <div class="body-paragraph" style="margin-top: 30px;">
+            Best regards
+        </div>
+        <div style="margin-top: 35px; font-weight: bold;" class="sync-company-name" contenteditable="true" oninput="syncCompany(this)">
+            MOHAMAD OMAR AUTO SPARE PARTS TR.
+        </div>
+        <div style="margin-top: 45px; font-weight: bold;" contenteditable="true">
+            Authorized Signatory:
+        </div>
+    </div>
+
+    <!-- ================= TEMPLATE 5 ================= -->
+    <div id="template5" class="cert-template">
+        <div style="margin-bottom: 20px;">
+            Date: <span contenteditable="true">25/07/2026</span>
+        </div>
+        <div class="body-paragraph">
+            This is to certify that <span class="sync-employee-name" contenteditable="true" style="font-weight: bold;" oninput="syncEmployee(this)">Muhammad Umar Farooq Ali</span> <span contenteditable="true" style="font-weight: bold;">(EMP#4571)</span> holder of Pakistan <span class="sync-id-label">Passport No.</span> <span class="sync-id-value" contenteditable="true" style="font-weight: bold;">QJ1818612</span> is working with <span class="sync-company-name" contenteditable="true" style="font-weight: bold;" oninput="syncCompany(this)">Gargash Motors & General Trading</span> in the position of a <span contenteditable="true" style="font-weight: bold;">Service Assistant</span> since <span contenteditable="true" style="font-weight: bold;">26/11/2025</span> until date and is a confirmed employee. His monthly remuneration consists of the following:
+        </div>
+
+        <table class="salary-table">
+            <tr>
+                <td>Basic Salary</td>
+                <td>:</td>
+                <td id="t5-basic" contenteditable="true" style="text-align: right;" onblur="calculateBreakdownTotal()">AED 1,500/-</td>
+            </tr>
+            <tr>
+                <td>Allowances</td>
+                <td>:</td>
+                <td id="t5-allowance" contenteditable="true" style="text-align: right;" onblur="calculateBreakdownTotal()">AED 1,500/-</td>
+            </tr>
+            <tr class="divider-row">
+                <td colspan="3"></td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">Total</td>
+                <td>:</td>
+                <td id="t5-total" contenteditable="true" style="text-align: right; font-weight: bold;">AED 3,000/-</td>
+            </tr>
+        </table>
+
+        <div class="body-paragraph">
+            This certificate is issued at the request of <span class="sync-employee-name" contenteditable="true" style="font-weight: bold;" oninput="syncEmployee(this)">Muhammad Umar Farooq Ali</span>, without any risk, liability and responsibility on part of <span class="sync-company-name" contenteditable="true" style="font-weight: bold;" oninput="syncCompany(this)">Gargash Motors & General Trading</span>.
+        </div>
+        
+        <div style="margin-top: 25px;">Sincerely,</div>
+
+        <div style="margin-top: 35px;">
+            <div style="font-weight: bold;" contenteditable="true">Bruno Berenguer</div>
+            <div style="font-weight: bold;" contenteditable="true">HR Transformation & Operations Lead</div>
+        </div>
+    </div>
+
+    <!-- ================= TEMPLATE 6 ================= -->
+    <div id="template6" class="cert-template">
+        <div style="text-align: right; margin-bottom: 25px;">
+            Date: <span contenteditable="true">24/07/2026</span>
+        </div>
+        <div class="title-container">
+            <h2>SALARY CERTIFICATE</h2>
+        </div>
+        <div class="body-paragraph" style="margin-top: 25px;">
+            This letter confirms that <span class="sync-employee-name" contenteditable="true" style="font-weight: bold;" oninput="syncEmployee(this)">Mr. NAJEEB UL HAQ</span>, a <span contenteditable="true" style="font-weight: bold;">Pakistani</span> holder, <span class="sync-id-label">Passport No.</span> <span class="sync-id-value" contenteditable="true" style="font-weight: bold;">AP9531002</span>, is employed by <span class="sync-company-name" contenteditable="true" style="font-weight: bold;" oninput="syncCompany(this)">THE EMIRATES GENERAL TRANSPORT AND SERVICES</span> in the position of <span contenteditable="true" style="font-weight: bold;">BUS DRIVER</span>.
+        </div>
+        <div class="body-paragraph">
+            He has been serving the company continuously since <span contenteditable="true" style="font-weight: bold;">2020</span> and currently receives a monthly salary of <span contenteditable="true" style="font-weight: bold;" onblur="updateSalaryWords(this, 't6-salary-words')">AED 2,600</span> (<span id="t6-salary-words" contenteditable="true" style="font-weight: bold;">Two Thousand Six Hundred UAE Dirhams Only</span>).
+        </div>
+        <div class="body-paragraph">
+            Mr. <span class="sync-employee-name" contenteditable="true" style="font-weight: bold;" oninput="syncEmployee(this)">NAJEEB UL HAQ</span> is a valued member of our organization and continues to be employed with us in good standing.
+        </div>
+        <div class="body-paragraph">
+            This certificate is issued at his request for Pakistan Consulate.
+        </div>
+        <div style="margin-top: 30px;">
+            Sincerely,
+        </div>
+        <div style="margin-top: 50px;">
+            <div style="font-weight: bold;" contenteditable="true">Authorized Signatory</div>
+            <div style="font-weight: bold; margin-top: 5px;" class="sync-company-name" contenteditable="true" oninput="syncCompany(this)">THE EMIRATES GENERAL TRANSPORT AND SERVICES</div>
+        </div>
+    </div>
+
+    <!-- ================= TEMPLATE 7 ================= -->
+    <div id="template7" class="cert-template">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
+            <div>Ref: <span contenteditable="true">SS/HR/2026/1042</span></div>
+            <div>Date: <span contenteditable="true">July 28, 2026</span></div>
+        </div>
+        <div class="title-container">
+            <h2>SALARY CERTIFICATE</h2>
+        </div>
+        <div class="body-paragraph" style="margin-top: 25px;">
+            This is to certify that <span class="sync-employee-name" contenteditable="true" style="font-weight: bold;" oninput="syncEmployee(this)">Mr. KK</span>, a <span contenteditable="true" style="font-weight: bold;">Pakistani</span> national, holding <span class="sync-id-label">Passport No.</span> <span class="sync-id-value" contenteditable="true" style="font-weight: bold;">123456</span>, has been employed with <span class="sync-company-name" contenteditable="true" style="font-weight: bold;" oninput="syncCompany(this)">Sana Studio</span> as an <span contenteditable="true" style="font-weight: bold;">Engineer</span> since <span contenteditable="true" style="font-weight: bold;">2020</span>.
+        </div>
+        <div class="body-paragraph">
+            His current monthly gross salary is <span contenteditable="true" style="font-weight: bold;" onblur="updateSalaryWords(this, 't7-salary-words')">AED 3,500</span> (<span id="t7-salary-words" contenteditable="true" style="font-weight: bold;">Three Thousand Five Hundred UAE Dirhams Only</span>).
+        </div>
+        <div class="body-paragraph">
+            This certificate has been issued upon the employee's request for whatever lawful purpose it may serve, without any responsibility, liability, or financial commitment on the part of the company.
+        </div>
+        <div style="margin-top: 30px;">
+            For and on behalf of <span class="sync-company-name" contenteditable="true" style="font-weight: bold;" oninput="syncCompany(this)">Sana Studio</span>
+        </div>
+        <div style="margin-top: 40px;">
+            <div style="font-weight: bold;" contenteditable="true">Authorized Signatory</div>
+            <div contenteditable="true">Human Resources Department</div>
+            <div class="sync-company-name" contenteditable="true" oninput="syncCompany(this)">Sana Studio</div>
+        </div>
+    </div>
+
+    <!-- ================= TEMPLATE 8 ================= -->
+    <div id="template8" class="cert-template">
+        <div style="margin-bottom: 25px;">
+            Date: <span contenteditable="true">28/07/2026</span>
+        </div>
+        <div class="title-container">
+            <h2>SALARY CERTIFICATE</h2>
+        </div>
+        <div class="body-paragraph">
+            This is to certify that <span class="sync-employee-name" contenteditable="true" style="font-weight: bold;" oninput="syncEmployee(this)">MR. MUHAMMAD AHMAD</span>, holding <span class="sync-id-label">Passport No.</span> <span class="sync-id-value" contenteditable="true" style="font-weight: bold;">AB1234567</span>, is a permanent employee of <span class="sync-company-name" contenteditable="true" style="font-weight: bold;" oninput="syncCompany(this)">AL REEM GENERAL TRADING LLC</span>, working in the capacity of <span contenteditable="true" style="font-weight: bold;">GENERAL ASSISTANT</span>.
+        </div>
+        <div class="body-paragraph">
+            His total monthly emoluments amount to AED <span contenteditable="true" style="font-weight: bold;" onblur="updateSalaryWords(this, 't8-salary-words')">4,000/-</span> (<span id="t8-salary-words" contenteditable="true" style="font-weight: bold;">Four Thousand UAE Dirhams Only</span>).
+        </div>
+        <div class="body-paragraph">
+            This certificate is issued upon his request to be submitted to whom it may concern without any legal liability on the company.
+        </div>
+        <div style="margin-top: 30px;">
+            Yours faithfully,
+        </div>
+        <div style="margin-top: 40px;">
+            <div style="font-weight: bold;" class="sync-company-name" contenteditable="true" oninput="syncCompany(this)">AL REEM GENERAL TRADING LLC</div>
+            <div style="font-weight: bold; margin-top: 25px;" contenteditable="true">HR MANAGER</div>
+        </div>
+    </div>
+
+    <!-- ================= TEMPLATE 9 ================= -->
+    <div id="template9" class="cert-template">
+        <div style="margin-bottom: 25px;">
+            Date: <span contenteditable="true">28/07/2026</span>
+        </div>
+        <div class="title-container">
+            <h2>CERTIFICATE OF EMPLOYMENT & SALARY</h2>
+        </div>
+        <div class="body-paragraph">
+            We hereby certify that <span class="sync-employee-name" contenteditable="true" style="font-weight: bold;" oninput="syncEmployee(this)">MR. RIZWANULLAH</span> is presently employed with <span class="sync-company-name" contenteditable="true" style="font-weight: bold;" oninput="syncCompany(this)">GULF STAR TECHNICAL SERVICES</span> as a <span contenteditable="true" style="font-weight: bold;">SUPERVISOR</span> since <span contenteditable="true" style="font-weight: bold;">10-01-2022</span>.
+        </div>
+        <div class="body-paragraph">
+            He is drawing a total monthly salary of AED <span contenteditable="true" style="font-weight: bold;" onblur="updateSalaryWords(this, 't9-salary-words')">6,000/-</span> (<span id="t9-salary-words" contenteditable="true" style="font-weight: bold;">Six Thousand UAE Dirhams Only</span>).
+        </div>
+        <div class="body-paragraph">
+            This certificate is issued at the specific request of the employee for official purposes.
+        </div>
+        <div style="margin-top: 30px;">
+            Best Regards,
+        </div>
+        <div style="margin-top: 40px;">
+            <div style="font-weight: bold;" class="sync-company-name" contenteditable="true" oninput="syncCompany(this)">GULF STAR TECHNICAL SERVICES</div>
+            <div style="font-weight: bold; margin-top: 25px;" contenteditable="true">GENERAL MANAGER</div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High-Resolution Barcode Generator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f1f3f6;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+        }
+        .app-container {
+            background: #ffffff;
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 520px;
+            text-align: center;
+        }
+        h2 {
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+        .form-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #34495e;
+        }
+        input {
+            width: calc(100% - 24px);
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #dcdde1;
+            border-radius: 6px;
+            outline: none;
+            text-transform: uppercase;
+        }
+        input:focus {
+            border-color: #3498db;
+        }
+        .output-wrapper {
+            background: #ffffff;
+            padding: 25px;
+            border: 2px dashed #b2bec3;
+            border-radius: 6px;
+            margin-top: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 110px;
+        }
+        .btn-group {
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .action-btn {
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .btn-png { background-color: #3498db; }
+        .btn-png:hover { background-color: #2980b9; }
+        .btn-svg { background-color: #e67e22; }
+        .btn-svg:hover { background-color: #d35400; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <h2>High-Res Barcode Generator</h2>
+    
+    <div class="form-group">
+        <label for="barcodeInput">Enter Value:</label>
+        <input type="text" id="barcodeInput" value="1620158743051" placeholder="Type numbers or text..." oninput="generateCode39()">
+    </div>
+
+    <div class="output-wrapper">
+        <svg id="barcodeTarget"></svg>
+    </div>
+
+    <div class="btn-group">
+        <button class="action-btn btn-png" onclick="downloadPNG()">💾 Save High-Resolution PNG (Clear Pic)</button>
+        <button class="action-btn btn-svg" onclick="downloadSVG()">📐 Save Vector SVG (Infinite Quality)</button>
+    </div>
+</div>
+
+<script>
+    const code39Map = {
+        '0': '1010011011010', '1': '1101001010110', '2': '1011001010110', '3': '1101100101010',
+        '4': '1010011010110', '5': '1101001101010', '6': '1011001101010', '7': '1010010110110',
+        '8': '1101001011010', '9': '1011001011010', 'A': '1101010010110', 'B': '1011010010110',
+        'C': '1101101001010', 'D': '1010110010110', 'E': '1101011001010', 'F': '1011011001010',
+        'G': '1010100110110', 'H': '1101010011010', 'I': '1011010011010', 'J': '1010110011010',
+        'K': '1101010100110', 'L': '1011010100110', 'M': '1101101010010', 'N': '1010110100110',
+        'O': '1101011010010', 'P': '1011011010010', 'Q': '1010101100110', 'R': '1101010110010',
+        'S': '1011010110010', 'T': '1010110110010', 'U': '1100101010110', 'V': '1001101010110',
+        'W': '1100110101010', 'X': '1001011010110', 'Y': '1100101101010', 'Z': '1001101101010',
+        '-': '1001010110110', '.': '1100101011010', ' ': '1001101011010', '*': '1001011011010'
+    };
+
+    function generateCode39() {
+        const svg = document.getElementById("barcodeTarget");
+        let rawInput = document.getElementById("barcodeInput").value.toUpperCase();
+        
+        svg.innerHTML = "";
+        if (!rawInput) return;
+
+        if (!rawInput.startsWith('*')) rawInput = '*' + rawInput;
+        if (!rawInput.endsWith('*')) rawInput = rawInput + '*';
+
+        let binarySequence = "";
+        for (let i = 0; i < rawInput.length; i++) {
+            const char = rawInput[i];
+            if (code39Map[char]) {
+                binarySequence += code39Map[char];
+                if (i < rawInput.length - 1) binarySequence += "0"; 
+            }
+        }
+
+        const unitWidth = 2;   
+        const unitHeight = 70; 
+
+        svg.setAttribute("height", unitHeight.toString());
+        svg.setAttribute("width", (binarySequence.length * unitWidth).toString());
+
+        let currentPositionX = 0;
+        for (let j = 0; j < binarySequence.length; j++) {
+            if (binarySequence[j] === '1') {
+                let elementRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                elementRect.setAttribute("x", currentPositionX.toString());
+                elementRect.setAttribute("y", "0");
+                elementRect.setAttribute("width", unitWidth.toString());
+                elementRect.setAttribute("height", unitHeight.toString());
+                elementRect.setAttribute("fill", "#000000");
+                svg.appendChild(elementRect);
+            }
+            currentPositionX += unitWidth;
+        }
+    }
+
+    // High Resolution PNG Export (Upscaled 4x for ultimate clarity)
+    function downloadPNG() {
+        const svg = document.getElementById("barcodeTarget");
+        const filename = document.getElementById("barcodeInput").value || "barcode";
+        
+        const svgData = new XMLSerializer().serializeToString(svg);
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        const img = new Image();
+        
+        const scale = 4; // Upscaling factor for high density/resolution
+        canvas.width = svg.getAttribute("width") * scale;
+        canvas.height = svg.getAttribute("height") * scale;
+        
+        img.onload = function() {
+            ctx.fillStyle = "#FFFFFF"; // Add clean white background
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.scale(scale, scale);
+            ctx.drawImage(img, 0, 0);
+            
+            const a = document.createElement("a");
+            a.download = `${filename}_highres.png`;
+            a.href = canvas.toDataURL("image/png");
+            a.click();
+        };
+        
+        img.src = "data:image/svg+xml;base64," + btoa(svgData);
+    }
+
+    // Vector SVG Export (Stays sharp no matter how much you zoom in)
+    function downloadSVG() {
+        const svg = document.getElementById("barcodeTarget");
+        const filename = document.getElementById("barcodeInput").value || "barcode";
+        const svgData = new XMLSerializer().serializeToString(svg);
+        const blob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement("a");
+        a.download = `${filename}.svg`;
+        a.href = url;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    window.onload = generateCode39;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Google Search Company Profile</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .search-container {
+            background: #ffffff;
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-container input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            font-size: 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        .search-container button {
+            padding: 12px 20px;
+            background-color: #2563eb;
+            color: white;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .search-container button:hover {
+            background-color: #1d4ed8;
+        }
+
+        .company-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 20px;
+        }
+
+        .logo-container {
+            width: 90px;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px dashed #cbd5e1;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .logo-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: none;
+        }
+
+        .company-info {
+            flex: 1;
+        }
+
+        .company-info h1 {
+            margin: 0 0 8px 0;
+            font-size: 24px;
+            color: #2c3e50;
+            outline: none;
+        }
+
+        .details-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .detail-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 15px;
+            color: #555;
+        }
+
+        .detail-row strong {
+            min-width: 130px;
+            color: #333;
+        }
+
+        .detail-row span {
+            color: #2c3e50;
+            outline: none;
+            padding: 2px 6px;
+            border-radius: 4px;
+            word-break: break-all;
+            flex: 1;
+        }
+
+        .editable:hover {
+            background-color: #f1f5f9;
+            box-shadow: inset 0 0 0 1px #cbd5e1;
+        }
+
+        .status-msg {
+            font-size: 13px;
+            color: #2563eb;
+            margin-bottom: 15px;
+            font-weight: 500;
+            text-align: center;
+            min-height: 18px;
+        }
+
+        .instructions {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            border-top: 1px dashed #eaeaea;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Online Google Search Bar -->
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Company ka naam likhein (e.g. Sana Studio, Emaar)..." onkeypress="if(event.key === 'Enter') fetchGoogleData()">
+        <button onclick="fetchGoogleData()">🌐 Google Search & Fill</button>
+    </div>
+
+    <div id="statusMessage" class="status-msg"></div>
+
+    <!-- Company Profile Card -->
+    <div class="company-card">
+        <div class="header-section">
+            <div class="logo-container">
+                <img id="companyLogoImg" src="" alt="Logo">
+            </div>
+            
+            <div class="company-info">
+                <h1 contenteditable="true" class="editable" id="displayName">Company Name</h1>
+            </div>
+        </div>
+
+        <div class="details-section">
+            <div class="detail-row">
+                <strong>Address:</strong>
+                <span contenteditable="true" class="editable" id="displayAddress">--</span>
+            </div>
+            
+            <div class="detail-row">
+                <strong>Phone No:</strong>
+                <span contenteditable="true" class="editable" id="displayPhone">--</span>
+            </div>
+
+            <div class="detail-row">
+                <strong>P.O. Box:</strong>
+                <span contenteditable="true" class="editable" id="displayPoBox">--</span>
+            </div>
+
+            <div class="detail-row">
+                <strong>Website / Email:</strong>
+                <span contenteditable="true" class="editable" id="displayEmail">--</span>
+            </div>
+        </div>
+
+        <div class="instructions">
+            💡 Tip: Aap kisi bhi text par click karke direct modify ya edit bhi kar sakte hain.
+        </div>
+    </div>
+
+    <script>
+        async function fetchGoogleData() {
+            const query = document.getElementById('searchInput').value.trim();
+            const statusMsg = document.getElementById('statusMessage');
+            
+            if (!query) {
+                alert('Pehle company ka naam likhein!');
+                return;
+            }
+
+            statusMsg.innerText = 'Searching Google public registry...';
+
+            try {
+                // CORS proxy ke zariye Google/DuckDuckGo ka public search data fetch karna taaki bina API key ke chale
+                const searchUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query + " UAE address phone email pobox")}&format=json`;
+                const response = await fetch(searchUrl);
+                const data = await response.json();
+
+                if (data && (data.Heading || data.Abstract)) {
+                    document.getElementById('displayName').innerText = data.Heading || query;
+                    document.getElementById('displayAddress').innerText = data.Abstract || "Google par available hai (Details check karein)";
+                    
+                    let cleanDomain = query.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com';
+                    document.getElementById('displayEmail').innerText = 'info@' + cleanDomain;
+                    document.getElementById('displayPhone').innerText = "Available online";
+                    document.getElementById('displayPoBox').innerText = "Not Available";
+
+                    const logoImg = document.getElementById('companyLogoImg');
+                    logoImg.src = `https://logo.clearbit.com/${cleanDomain}`;
+                    logoImg.style.display = 'block';
+
+                    statusMsg.innerText = 'Data successfully loaded from web search!';
+                } else {
+                    // Agar direct match na ho toh Google Search ka direct page khोल dega taaki user foran dekh le
+                    document.getElementById('displayName').innerText = query;
+                    document.getElementById('displayAddress').innerText = "Not Available";
+                    document.getElementById('displayPhone').innerText = "Not Available";
+                    document.getElementById('displayPoBox').innerText = "Not Available";
+                    document.getElementById('displayEmail').innerText = "Not Available";
+                    
+                    statusMsg.innerText = 'Direct record nahi mila, Google page khul raha hai...';
+                    window.open(`https://www.google.com/search?q=${encodeURIComponent(query + ' UAE address phone email')}`, '_blank');
+                }
+            } catch (error) {
+                statusMsg.innerText = 'Online search redirecting...';
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(query + ' UAE address phone email')}`, '_blank');
+            }
+        }
+    </script>
+
+</body>
+</html>

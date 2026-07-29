@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline QR Code Generator</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; background-color: #f4f4f9; }
+        .container { background: white; padding: 30px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 350px; }
+        
+        /* Multi-line typing area that expands down */
+        textarea { 
+            padding: 10px; 
+            width: 90%; 
+            min-height: 60px; 
+            border: 1px solid #ccc; 
+            border-radius: 5px; 
+            margin-bottom: 20px; 
+            resize: none; 
+            font-family: sans-serif;
+            font-size: 14px;
+            overflow-y: hidden;
+        }
+        
+        #qrcode { margin-top: 20px; display: flex; justify-content: center; }
+        
+        /* Save Button Style */
+        .save-btn {
+            display: block;
+            width: 96%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .save-btn:hover { background-color: #0056b3; }
+    </style>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <h2>QR Code Generator</h2>
+    
+    <textarea id="text" placeholder="Type or paste text here..." oninput="autoGrowAndGenerate(this)"></textarea>
+    
+    <div id="qrcode"></div>
+    
+    <button class="save-btn" onclick="saveAsJPG()">Save as JPG File</button>
+</div>
+
+<script>
+    // Initialize QR Code generator
+    var qrcode = new QRCode(document.getElementById("qrcode"), {
+        width: 250,
+        height: 250,
+        correctLevel : QRCode.CorrectLevel.H // High correction level for dense multi-line data
+    });
+
+    // Makes the input box go down/grow with more text, then updates the QR code
+    function autoGrowAndGenerate(element) {
+        element.style.height = "60px"; // Reset height
+        element.style.height = element.scrollHeight + "px"; // Expand down based on text volume
+        
+        var data = element.value;
+        if (data.trim() !== "") {
+            qrcode.makeCode(data);
+        } else {
+            qrcode.clear();
+        }
+    }
+
+    // Captures the QR image data and forces a JPG download dialog
+    function saveAsJPG() {
+        var qrImg = document.querySelector("#qrcode img");
+        if (!qrImg || !qrImg.src) {
+            alert("Please type some text first to generate a QR code.");
+            return;
+        }
+
+        // Create a hidden canvas to convert the default PNG output to a high-quality JPG image
+        var canvas = document.createElement("canvas");
+        var ctx = canvas.getContext("2d");
+        var img = new Image();
+        
+        img.onload = function() {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            
+            // Fill background white (required for proper JPG encoding)
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw the QR graphic onto the canvas
+            ctx.drawImage(img, 0, 0);
+            
+            // Trigger direct save window as .jpg
+            var dlLink = document.createElement("a");
+            dlLink.download = "qrcode.jpg";
+            dlLink.href = canvas.toDataURL("image/jpeg", 1.0);
+            document.body.appendChild(dlLink);
+            dlLink.click();
+            document.body.removeChild(dlLink);
+        };
+        
+        img.src = qrImg.src;
+    }
+</script>
+
+</body>
+</html>

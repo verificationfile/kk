@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TR Format - Transfer of Residence Calculator</title>
+    <style>
+        :root {
+            --primary-color: #1f4e78;
+            --primary-light: #f2f6fa;
+            --accent-color: #2e7d32;
+            --accent-light: #e8f5e9;
+            --border-color: #cfd8dc;
+            --text-dark: #37474f;
+            --text-light: #eceff1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: var(--text-dark);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 5px;
+            font-size: 1.8rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            color: #78909c;
+            margin-bottom: 25px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+        }
+
+        th, td {
+            padding: 12px 10px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #fcfdfe;
+        }
+
+        input[type="date"] {
+            width: 90%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            text-align: center;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        input[type="date"]:focus {
+            border-color: var(--primary-color);
+        }
+
+        input[type="text"] {
+            width: 80%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            text-align: center;
+            outline: none;
+        }
+
+        .days-cell {
+            font-weight: bold;
+            color: var(--primary-color);
+            background-color: var(--primary-light) !important;
+            font-size: 1rem;
+        }
+
+        .total-row {
+            font-weight: bold;
+            background-color: #e9eef4 !important;
+        }
+
+        .total-label {
+            text-align: right;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .total-value {
+            font-size: 1.1rem;
+            color: var(--primary-color);
+        }
+
+        .eligibility-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 5px solid var(--primary-color);
+            margin-top: 15px;
+        }
+
+        .eligibility-label {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .eligibility-status {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .status-ok {
+            background-color: var(--accent-light);
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+        }
+
+        .status-not {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #c62828;
+        }
+
+        .actions-bar {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            font-size: 0.9rem;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-add {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-add:hover {
+            background-color: #153654;
+        }
+
+        .btn-delete {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+        }
+
+        .btn-delete:hover {
+            background-color: #ffcdd2;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>TR Format Calculator</h1>
+    <p class="subtitle">Transfer of Residence &mdash; Physical Presence Tracker</p>
+
+    <div class="actions-bar">
+        <button class="btn-add" onclick="addRow()">+ Add New Entry</button>
+    </div>
+
+    <table id="trTable">
+        <thead>
+            <tr>
+                <th style="width: 25%;">Departure Date</th>
+                <th style="width: 15%;">Page</th>
+                <th style="width: 15%;">Days</th>
+                <th style="width: 25%;">Arrival Date</th>
+                <th style="width: 15%;">Page</th>
+                <th style="width: 5%;">Action</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            </tbody>
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="2" class="total-label">Total Days:</td>
+                <td id="totalDays" class="total-value">0</td>
+                <td colspan="3"></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="eligibility-container">
+        <span class="eligibility-label">ABOVE 850 DAYS ELIGIBILITY:</span>
+        <span id="eligibilityStatus" class="eligibility-status status-not">NOT ELIGIBLE</span>
+    </div>
+</div>
+
+<script>
+    // Initial data
+    const initialData = [
+        { departure: "2026-01-27", pageDep: "", arrival: "2026-06-25", pageArr: "" },
+        { departure: "2024-02-16", pageDep: "", arrival: "2025-09-16", pageArr: "" },
+        { departure: "2023-06-24", pageDep: "", arrival: "2023-12-21", pageArr: "" }
+    ];
+
+    function createRow(data = { departure: "", pageDep: "", arrival: "", pageArr: "" }) {
+        const tbody = document.getElementById("tableBody");
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td><input type="date" class="dep-date" value="${data.departure}" onchange="calculateRowDays(this)"></td>
+            <td><input type="text" class="page-dep" value="${data.pageDep}" placeholder="e.g. 12"></td>
+            <td class="days-cell">0</td>
+            <td><input type="date" class="arr-date" value="${data.arrival}" onchange="calculateRowDays(this)"></td>
+            <td><input type="text" class="page-arr" value="${data.pageArr}" placeholder="e.g. 13"></td>
+            <td><button class="btn-delete" onclick="deleteRow(this)">Delete</button></td>
+        `;
+
+        tbody.appendChild(row);
+        calculateRowDays(row.querySelector(".dep-date"));
+    }
+
+    function addRow() {
+        createRow();
+    }
+
+    function deleteRow(button) {
+        const row = button.closest("tr");
+        row.remove();
+        calculateGrandTotal();
+    }
+
+    function calculateRowDays(inputElement) {
+        const row = inputElement.closest("tr");
+        const depVal = row.querySelector(".dep-date").value;
+        const arrVal = row.querySelector(".arr-date").value;
+        const daysCell = row.querySelector(".days-cell");
+
+        if (depVal && arrVal) {
+            const depDate = new Date(depVal);
+            const arrDate = new Date(arrVal);
+            const timeDiff = arrDate - depDate;
+            const daysDiff = Math.round(timeDiff / (1000 * 60 * 60 * 24));
+
+            if (daysDiff >= 0) {
+                daysCell.textContent = daysDiff;
+            } else {
+                daysCell.textContent = "Error";
+            }
+        } else {
+            daysCell.textContent = "0";
+        }
+        calculateGrandTotal();
+    }
+
+    function calculateGrandTotal() {
+        const daysCells = document.querySelectorAll(".days-cell");
+        let grandTotal = 0;
+
+        daysCells.forEach(cell => {
+            const val = parseInt(cell.textContent);
+            if (!isNaN(val) && val > 0) {
+                grandTotal += val;
+            }
+        });
+
+        document.getElementById("totalDays").textContent = grandTotal;
+
+        const statusLabel = document.getElementById("eligibilityStatus");
+        
+        // Correct evaluation condition setting threshold strictly to 850 days
+        if (grandTotal >= 850) {
+            statusLabel.textContent = "OK";
+            statusLabel.className = "eligibility-status status-ok";
+        } else {
+            statusLabel.textContent = "NOT ELIGIBLE";
+            statusLabel.className = "eligibility-status status-not";
+        }
+    }
+
+    // Initialize with sample data
+    initialData.forEach(item => createRow(item));
+</script>
+
+</body>
+</html>
